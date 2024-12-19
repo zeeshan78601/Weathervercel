@@ -1,6 +1,6 @@
 'use client'
 import React, { useState, useEffect } from 'react'
-
+import toast, { Toaster } from 'react-hot-toast';
 const page = () => {
   const [weather, setweather] = useState(null)
   const [city, setcity] = useState('')
@@ -19,6 +19,14 @@ const page = () => {
       alert('Please Enter City Name')
       return
     }
+    const cityExists = storedData.some((item) => item.name.toLowerCase() === city.trim().toLowerCase());
+  if (cityExists) {
+    <Toaster />
+    toast.error("The City is already added.")
+    
+    return;
+    
+  }
     const encodedCity = encodeURIComponent(city.trim())
     const Res = await fetch(
       `https://api.openweathermap.org/data/2.5/weather?q=${encodedCity}&units=metric&appid=${process.env.NEXT_PUBLIC_WEATHER_API_KEY}`
@@ -31,16 +39,18 @@ const page = () => {
       localStorage.setItem('savedData', JSON.stringify(updatedData))
       setstoredData(updatedData)
     } else {
-      alert(`Error: ${data.message}`) // Show error message for invalid city
+      toast.error(`Error: ${data.message}`) // Show error message for invalid city
     }
   }
  const handleDelete = (index)=>{
   const updatedData = storedData.filter((_,i)=> i!==index)
   setstoredData(updatedData)
   localStorage.setItem('savedData',JSON.stringify(updatedData))
+  
  }
 
   return (
+   
     <div className="bg-blue-200 min-h-screen flex flex-col items-center">
       <form className="flex flex-col w-full justify-center items-center p-4 gap-4">
         <h1 className="text-3xl bg-red-300 px-4 py-2 rounded-md">Weather Forecast</h1>
@@ -59,6 +69,7 @@ const page = () => {
         </button>
 
         {storedData.length > 0 ? (
+          
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-6">
             {storedData.map((item, index) => {
               const handleCopy = (e) => {
@@ -71,15 +82,21 @@ const page = () => {
                 `
                 navigator.clipboard
                   .writeText(weatherInfo)
-                  .then(() => alert('Weather information copied to clipboard!'))
+                  .then(() => toast.success('Copied to clipboard!'))
                   .catch((err) => alert('Failed to copy: ' + err))
               }
 
               return (
+                
                 <div
                   key={index}
                   className="border border-black rounded-lg p-4 bg-white flex flex-col justify-center items-center gap-2 shadow-md hover:shadow-lg transition-shadow duration-300"
+                
                 >
+                  <Toaster
+  position="top-right"
+  reverseOrder={false}
+/>
                   <h2 className="text-xl font-bold">City: {item.name}</h2>
                   <h2 className="text-lg">Temp: {item.main.temp}°C</h2>
                   <h2 className="text-lg">Rain Probability: {item.pop ? item.pop * 100 : '0'}%</h2>
