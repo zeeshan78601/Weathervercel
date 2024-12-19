@@ -1,101 +1,110 @@
-import Image from "next/image";
+'use client'
+import React, { useState, useEffect } from 'react'
 
-export default function Home() {
+const page = () => {
+  const [weather, setweather] = useState(null)
+  const [city, setcity] = useState('')
+  const [storedData, setstoredData] = useState([])
+
+  useEffect(() => {
+    const GetData = localStorage.getItem('savedData')
+    if (GetData) {
+      setstoredData(JSON.parse(GetData) || [])
+    }
+  }, [])
+
+  async function DataFetch(e) {
+    e.preventDefault()
+    if (!city) {
+      alert('Please Enter City Name')
+      return
+    }
+    const encodedCity = encodeURIComponent(city.trim())
+    const Res = await fetch(
+      `https://api.openweathermap.org/data/2.5/weather?q=${encodedCity}&units=metric&appid=${process.env.NEXT_PUBLIC_WEATHER_API_KEY}`
+    )
+    const data = await Res.json()
+
+    if (data.cod === 200) {
+      setweather(data)
+      const updatedData = [...storedData, data]
+      localStorage.setItem('savedData', JSON.stringify(updatedData))
+      setstoredData(updatedData)
+    } else {
+      alert(`Error: ${data.message}`) // Show error message for invalid city
+    }
+  }
+ const handleDelete = (index)=>{
+  const updatedData = storedData.filter((_,i)=> i!==index)
+  setstoredData(updatedData)
+  localStorage.setItem('savedData',JSON.stringify(updatedData))
+ }
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
+    <div className="bg-blue-200 min-h-screen flex flex-col items-center">
+      <form className="flex flex-col w-full justify-center items-center p-4 gap-4">
+        <h1 className="text-3xl bg-red-300 px-4 py-2 rounded-md">Weather Forecast</h1>
+        <input
+          type="text"
+          className="w-full sm:w-2/3 md:w-1/2 lg:w-1/3 border border-green-400 rounded-lg text-center p-2"
+          placeholder="Enter City name"
+          value={city}
+          onChange={(e) => setcity(e.target.value)}
         />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.js
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+        <button
+          onClick={DataFetch}
+          className="border border-blue-400 rounded-md bg-gray-300 text-xl px-6 py-2 hover:bg-gray-400"
+        >
+          Get Weather
+        </button>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+        {storedData.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-6">
+            {storedData.map((item, index) => {
+              const handleCopy = (e) => {
+                e.preventDefault()
+                const weatherInfo = `
+                  City: ${item.name}
+                  Temp: ${item.main.temp}°C
+                  Rain Probability: ${item.pop ? item.pop * 100 : '0'}%
+                  Weather: ${item.weather[0]?.description || 'N/A'}
+                `
+                navigator.clipboard
+                  .writeText(weatherInfo)
+                  .then(() => alert('Weather information copied to clipboard!'))
+                  .catch((err) => alert('Failed to copy: ' + err))
+              }
+
+              return (
+                <div
+                  key={index}
+                  className="border border-black rounded-lg p-4 bg-white flex flex-col justify-center items-center gap-2 shadow-md hover:shadow-lg transition-shadow duration-300"
+                >
+                  <h2 className="text-xl font-bold">City: {item.name}</h2>
+                  <h2 className="text-lg">Temp: {item.main.temp}°C</h2>
+                  <h2 className="text-lg">Rain Probability: {item.pop ? item.pop * 100 : '0'}%</h2>
+                  <h2 className="text-lg">Weather: {item.weather[0]?.description || 'N/A'}</h2>
+                  <button
+                    onClick={handleCopy}
+                    className="border rounded bg-blue-400 px-4 py-2 text-white mt-2 hover:bg-blue-500"
+                  >
+                    Copy
+                  </button>
+                  <button className="border rounded bg-red-400 px-4 py-2 text-white mt-2 hover:bg-red-500" onClick={()=>handleDelete(index)}>Delete</button>
+                </div>
+              )
+            })}
+          </div>
+        ) : (
+          <h1 className="text-center text-2xl mt-10">Data not available</h1>
+        )}
+      </form>
+
+      <footer className="text-center text-xl mt-auto bg-blue-300 w-full py-4">
+        Footer Weather Forecast &copy; 2024
       </footer>
     </div>
-  );
+  )
 }
+
+export default page
